@@ -1,6 +1,6 @@
-# Basic Sample Hardhat Project
+# The contract that allows DAO members to raise funds for planting trees
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts.
+Simplifications: in first version owners are sets only in the constructor.
 
 Try running some of the following tasks:
 
