@@ -42,7 +42,7 @@ contract ThreePlantingDAO {
     @param amount funds for issue executing
     @param description description of issue
     @param isExecuted if the issue exicuted
-    @param numConfirmations count of confirmations
+    @param confirmators confirmators
     */
     struct ThreePlantingIssue {
         string externalId;
@@ -51,7 +51,7 @@ contract ThreePlantingDAO {
         address executor;
         bool isFundsSent;
         bool isExecuted;
-        uint numConfirmations;
+        address[] confirmators;
     }
 
     /**
@@ -69,7 +69,7 @@ contract ThreePlantingDAO {
                 isOwner = true;
             }
         }
-        require(isOwner, "Not owner");
+        require(isOwner, "Only owner can call");
         _;
     }
 
@@ -118,7 +118,7 @@ contract ThreePlantingDAO {
             address(0),
             false,
             false,
-            0
+            new address[](requiredConfirmationsCount)
         );
         issues[externalId] = issue;
         emit IssueCreated(externalId);
@@ -147,7 +147,16 @@ contract ThreePlantingDAO {
     ) public onlyOwner {
         ThreePlantingIssue storage issue = issues[externalId];
         require(issue.executor != address(0), "Issue has't executor");
-        issue.numConfirmations += 1;
+        
+        bool alreadySignedBySender = false;
+        for (uint i = 0; i < issue.confirmators.length; i++) {
+            if (msg.sender == issue.confirmators[i]) {
+                alreadySignedBySender = true;
+            }
+        }
+        require(!alreadySignedBySender, "You can confirm this issue one time");
+        
+        issue.confirmators.push(msg.sender);
 
         sendFundsIfHasRequiredConfirmation(issue);
     }
@@ -158,7 +167,7 @@ contract ThreePlantingDAO {
     function sendFundsIfHasRequiredConfirmation(
         ThreePlantingIssue storage _issue
     ) private onlyOwner {
-        if (_issue.numConfirmations == requiredConfirmationsCount) {
+        if (_issue.confirmators.length == requiredConfirmationsCount) {
             (bool success, ) = _issue.executor.call{value: _issue.amount}(_issue.description);
             require(success, "Failed to send Ether");
 
