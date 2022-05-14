@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
  The contract that allows DAO members to raise funds for planting trees
  Simplifications: owners are sets only in the constructor.
  */
-contract ThreePlantingDAO {
+contract TreePlantingDAO {
 
     /**
      Issue created event
@@ -47,7 +47,7 @@ contract ThreePlantingDAO {
     struct ThreePlantingIssue {
         string externalId;
         uint amount;
-        bytes description;
+        string description;
         address executor;
         bool isFundsSent;
         bool isExecuted;
@@ -95,21 +95,14 @@ contract ThreePlantingDAO {
     }
 
     /**
-     @return Contract's balance
-     */
-    function balance() public view returns (uint) {
-        return address(this).balance;
-    }
-
-    /**
      Create new issue
      */
     function createIssue(
         string memory externalId,
         uint value,
-        bytes memory description
+        string memory description
     ) public onlyOwner {
-        require(balance() > value, "Funds sum should't more than ccontract's balance");
+        require(address(this).balance > value, "Funds sum should't more than ccontract's balance");
 
         ThreePlantingIssue memory issue = ThreePlantingIssue(
             externalId,
@@ -168,7 +161,7 @@ contract ThreePlantingDAO {
         ThreePlantingIssue storage _issue
     ) private onlyOwner {
         if (_issue.confirmators.length == requiredConfirmationsCount) {
-            (bool success, ) = _issue.executor.call{value: _issue.amount}(_issue.description);
+            (bool success, ) = _issue.executor.call{value: _issue.amount}("");
             require(success, "Failed to send Ether");
 
             _issue.isFundsSent = true;
@@ -188,5 +181,41 @@ contract ThreePlantingDAO {
 
         issue.isExecuted = true;
         emit IssueExecuted(externalId);
+    }
+
+    /**
+     Read all DAO's owners
+     */
+    function getOwners() public view returns (address[] memory) {
+        return owners;
+    }
+
+    /**
+     Return issue with [_externalId]
+     */
+    function getIssue(string memory _externalId)
+        public
+        view
+        returns (
+            string memory externalId,
+            uint amount,
+            string memory description,
+            address executor,
+            bool isFundsSent,
+            bool isExecuted,
+            address[] memory confirmators
+        )
+    {
+        ThreePlantingIssue storage issue = issues[_externalId];
+
+        return (
+             issue.externalId,
+            issue.amount,
+            issue.description,
+            issue.executor,
+            issue.isFundsSent,
+            issue.isExecuted,
+            issue.confirmators
+        );
     }
 }
