@@ -28,12 +28,30 @@ describe("TreePlantingDAO", function () {
 
   it("when createIssue, then getIssue returns the same", async function () {
     let externalId = "1"
+    let description = "For big tree"
     // TODO: send 1 eth from owner1 to treePlantingDAO
-    const tx = await treePlantingDAO.connect(owner1).createIssue(
-      externalId,
-      ethers.utils.parseEther("0.1"),
-      ""
+    const tx = {
+      from: owner1.address,
+      to: treePlantingDAO.address,
+      value: ethers.utils.parseEther("1"),
+      nonce: 2,
+      gasLimit: ethers.utils.hexlify("0x100000"),
+      gasPrice: ethers.utils.parseEther("0.00001")
+    }
+    console.log("tx = " + JSON.stringify(tx))
+    await owner1.sendTransaction(tx)
+
+    const tx1 = await treePlantingDAO.connect(owner1).createIssue(
+       externalId,
+       ethers.utils.parseEther("0.1"),
+       description
     )
+
+    let actual
+    (actual) = await treePlantingDAO.getIssue(externalId)
+
+    expect(externalId).to.eq(actual["externalId"])
+    expect(description).to.eq(actual["description"])
   });
   
 });

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "hardhat/console.sol";
+
 /**
  The contract that allows DAO members to raise funds for planting trees
  Simplifications: owners are sets only in the constructor.
@@ -24,6 +26,11 @@ contract TreePlantingDAO {
      Issue executed event
     */
     event IssueExecuted(string externalId);
+
+    /**
+     New ethers received
+    */
+    event Received(address, uint);
 
     /**
      Minimim confirmations count for send funds
@@ -102,7 +109,9 @@ contract TreePlantingDAO {
         uint value,
         string memory description
     ) public onlyOwner {
-        require(address(this).balance > value, "Funds sum should't more than ccontract's balance");
+        uint contractBalance = address(this).balance;
+        console.log("Contract balance: %s", contractBalance);
+        require(contractBalance > value, "Funds sum should't more than ccontract's balance");
 
         ThreePlantingIssue memory issue = ThreePlantingIssue(
             externalId,
@@ -217,5 +226,12 @@ contract TreePlantingDAO {
             issue.isExecuted,
             issue.confirmators
         );
+    }
+
+    /**
+     Contracs receive-function
+     */
+    receive() external payable {
+        emit Received(msg.sender, msg.value);
     }
 }
