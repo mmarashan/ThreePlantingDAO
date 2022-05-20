@@ -148,7 +148,7 @@ contract TreePlantingDAO {
         string memory externalId
     ) public onlyOwner {
         ThreePlantingIssue storage issue = issues[externalId];
-        require(issue.executor != address(0), "Issue has't executor");
+        require(issue.executor != address(0), "Issue has't has executor");
         
         bool alreadySignedBySender = false;
         for (uint i = 0; i < issue.confirmators.length; i++) {
@@ -218,7 +218,7 @@ contract TreePlantingDAO {
         ThreePlantingIssue storage issue = issues[_externalId];
 
         return (
-             issue.externalId,
+            issue.externalId,
             issue.amount,
             issue.description,
             issue.executor,
