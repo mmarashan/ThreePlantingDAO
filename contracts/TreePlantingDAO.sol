@@ -110,8 +110,9 @@ contract TreePlantingDAO {
         string memory description
     ) public onlyOwner {
         uint contractBalance = address(this).balance;
-        console.log("Contract balance: %s", contractBalance);
         require(contractBalance > value, "Funds sum should't more than ccontract's balance");
+
+        address[] memory confirmators;
 
         ThreePlantingIssue memory issue = ThreePlantingIssue(
             externalId,
@@ -120,7 +121,7 @@ contract TreePlantingDAO {
             address(0),
             false,
             false,
-            new address[](requiredConfirmationsCount)
+            confirmators
         );
         issues[externalId] = issue;
         emit IssueCreated(externalId);
@@ -128,26 +129,24 @@ contract TreePlantingDAO {
 
     /**
      Sets issue executor
-     @param executor executor's addresss
+     @param _executor executor's addresss
      */
     function setIssueExecutor(
-        string memory externalId,
-        address executor
+        string memory _externalId,
+        address _executor
     ) public onlyOwner {
-        ThreePlantingIssue storage issue = issues[externalId];
+        ThreePlantingIssue storage issue = issues[_externalId];
         require(issue.executor == address(0), "Issue already has executor");
-        issue.executor = executor;
-
-        emit IssueStarted(externalId, executor);
+        issue.executor = _executor;
     }
 
     /**
      Confirm issue
      */
     function confirmIssue(
-        string memory externalId
+        string memory _externalId
     ) public onlyOwner {
-        ThreePlantingIssue storage issue = issues[externalId];
+        ThreePlantingIssue storage issue = issues[_externalId];  
         require(issue.executor != address(0), "Issue has't has executor");
         
         bool alreadySignedBySender = false;
@@ -169,10 +168,10 @@ contract TreePlantingDAO {
     function sendFundsIfHasRequiredConfirmation(
         ThreePlantingIssue storage _issue
     ) private onlyOwner {
+         console.log(_issue.confirmators.length);
         if (_issue.confirmators.length == requiredConfirmationsCount) {
             (bool success, ) = _issue.executor.call{value: _issue.amount}("");
             require(success, "Failed to send Ether");
-
             _issue.isFundsSent = true;
             emit IssueStarted(_issue.externalId, _issue.executor);
         }
@@ -183,13 +182,13 @@ contract TreePlantingDAO {
      Simplifications: one owner can set issue as executed
      */
     function markAsExecuted(
-        string memory externalId
+        string memory _externalId
     ) public onlyOwner {
-        ThreePlantingIssue storage issue = issues[externalId];
+        ThreePlantingIssue storage issue = issues[_externalId];
         require(issue.isFundsSent, "Issue not started");
 
         issue.isExecuted = true;
-        emit IssueExecuted(externalId);
+        emit IssueExecuted(_externalId);
     }
 
     /**

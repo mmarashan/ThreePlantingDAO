@@ -27,60 +27,74 @@ describe("TreePlantingDAO", function () {
   });
 
   it("when createIssue, then getIssue returns the same", async function () {
+    /* arrange */
     let externalId = "1"
     let description = "For big tree"
     
+     /* action */
     await sendEtherToContract()
-
     const tx1 = await treePlantingDAO.connect(owner1).createIssue(
        externalId,
        ethers.utils.parseEther("0.1"),
        description
     )
-
     let actual
     (actual) = await treePlantingDAO.getIssue(externalId)
 
+     /* assert */
     expect(externalId).to.eq(actual["externalId"])
     expect(description).to.eq(actual["description"])
   });
 
   it("when setIssueExecutor, then getIssue returns the correct executor address", async function () {
+    /* arrange */
     let externalId = "1"
     let description = "For big tree"
-    await sendEtherToContract()
 
+    /* action */
+    await sendEtherToContract()
     await treePlantingDAO.connect(owner1).createIssue(
        externalId,
        ethers.utils.parseEther("0.1"),
        description
     )
-
     await treePlantingDAO.setIssueExecutor(externalId, executor.address)
-
     let actual
     (actual) = await treePlantingDAO.getIssue(externalId)
 
+    /* assert */
     expect(executor.address).to.eq(actual["executor"])
   });
 
-  // it("when issue confirmed, then send ethers to executor address", async function () {
-  //   let externalId = "1"
-  //   let description = "For big tree"
-  //   await sendEtherToContract()
+  it("when issue confirmed, then send ethers to executor address", async function () {
+    /* arrange */
+    let externalId = "1"
+    let description = "For big tree"
+    let issueValueEth = 1
 
-  //   await treePlantingDAO.connect(owner1).createIssue(
-  //      externalId,
-  //      ethers.utils.parseEther("0.1"),
-  //      description
-  //   )
-  //   await treePlantingDAO.setIssueExecutor(externalId, executor.address)
+    /* action */
+    await sendEtherToContract()
+    await sendEtherToContract()
 
-  //   await treePlantingDAO.connect(owner1).confirmIssue(executor.address)
+    await treePlantingDAO.connect(owner1).createIssue(
+       externalId,
+       ethers.utils.parseEther("1"),
+       description
+    )
+    treePlantingDAO.on('IssueCreated', (id) => console.log("On issue created " + id))
+    await treePlantingDAO.setIssueExecutor(externalId, executor.address)
 
+    let executorBalanceEthBefore = ethers.utils.formatEther(await ethers.provider.getBalance(executor.address))
 
-    
-  // });
+    await treePlantingDAO.connect(owner1).confirmIssue(externalId)
+    await treePlantingDAO.connect(owner2).confirmIssue(externalId)
+
+    let executorBalanceEth = ethers.utils.formatEther(await ethers.provider.getBalance(executor.address))
+    let ethBalanceDiff = executorBalanceEth - executorBalanceEthBefore
+
+     /* assert */
+    expect(issueValueEth).to.eq(ethBalanceDiff)
+  });
 
   async function sendEtherToContract() {
     const tx = {
@@ -91,7 +105,6 @@ describe("TreePlantingDAO", function () {
       gasLimit: ethers.utils.hexlify("0x100000"),
       gasPrice: ethers.utils.parseEther("0.00001")
     }
-    console.log("tx = " + JSON.stringify(tx))
     await owner1.sendTransaction(tx)
   }
   
