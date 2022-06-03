@@ -92,7 +92,7 @@ describe("TreePlantingDAO", function () {
     let executorBalanceEth = ethers.utils.formatEther(await ethers.provider.getBalance(executor.address))
     let ethBalanceDiff = executorBalanceEth - executorBalanceEthBefore
 
-     /* assert */
+     /* action */
     expect(issueValueEth).to.eq(ethBalanceDiff)
   });
 
